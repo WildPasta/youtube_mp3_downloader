@@ -70,7 +70,7 @@ def cleanup_temp_folder_if_needed():
     total_size = sum(os.path.getsize(file) for file in glob.glob(f"{folder}/*"))
     total_size_gb = total_size / (1024 ** 3)
 
-    if total_size_gb > 2:
+    if total_size_gb > 1:
         try:
             print("Cleaning up temp folder...")
             for file in glob.glob(f"{folder}/*"):
