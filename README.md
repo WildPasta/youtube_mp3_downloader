@@ -8,7 +8,8 @@ YouTube Downloader is a web application built with Flask that allows users to do
 - User-friendly web interface.
 - Automatic file cleanup of temporary files.
 
-## Installation
+## Installation (CLI)
+
 1. Clone the repository:
    ```shell
    git clone https://github.com/WildPasta/youtube_mp3_downloader.git
@@ -19,7 +20,7 @@ YouTube Downloader is a web application built with Flask that allows users to do
    python -m pip install -r requirements.txt
    ```
 
-## Usage
+## Usage (CLI)
 
 1. Start the application on your server:
    ```shell
@@ -33,6 +34,22 @@ YouTube Downloader is a web application built with Flask that allows users to do
 
 5. The application will extract the audio from the YouTube video and provide a download link for the converted MP3 file. Simply click the download link to save the file to your local machine.
 
+## Docker installation
+
+Clone the repository:
+```shell
+git clone https://github.com/WildPasta/youtube_mp3_downloader.git
+```
+
+Build the docker image:
+```shell
+docker build -t wildpasta/youtube_downloader:1.0.0 .
+```
+
+Run the docker container using the docker-compose.yml file:
+```shell
+docker-compose up -d
+```
 ## Todo
 
 - [ ] CSRF protection with Flask-WTF
