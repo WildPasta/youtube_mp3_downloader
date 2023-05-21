@@ -15,6 +15,7 @@ def index():
 @app.route('/download', methods=['POST'])
 def download():
     clear_temp_folder()
+    allowed_mime_types = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/mpeg']
     url = request.form['url']
 
     # Check if it is a valid YouTube URL
@@ -26,6 +27,12 @@ def download():
     youtube = YouTube(url)
     title = quote(youtube.title + '.mp3', safe='')
     audio = youtube.streams.filter(only_audio=True).first()
+
+    if audio.mime_type not in allowed_mime_types:
+        error_message = "Unsupported audio format"
+        return redirect(url_for('index', error=error_message))
+    
+    # Download audio file
     audio_file = audio.download(output_path='temp', filename=title)
 
     # Path to temporary audio file
