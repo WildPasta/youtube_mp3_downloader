@@ -4,6 +4,7 @@ from moviepy.editor import AudioFileClip
 import os
 import re
 from urllib.parse import quote
+import glob
 
 app = Flask(__name__)
 
@@ -13,8 +14,7 @@ def index():
     return render_template('index.html', error_message=error_message)
 
 @app.route('/download', methods=['POST'])
-def download():
-    clear_temp_folder()
+def download(): 
     allowed_mime_types = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/mpeg']
     url = request.form['url']
 
@@ -32,13 +32,21 @@ def download():
         error_message = "Unsupported audio format"
         return redirect(url_for('index', error=error_message))
     
+    if audio.filesize_gb > 1:
+        error_message = "File is too large to be downloaded"
+        return redirect(url_for('index', error=error_message))
+    
+    # Check if the temp folder exists
+    if not os.path.exists('temp'):  
+        os.makedirs('temp')
+    temp_audio_path = os.path.join('temp', title)
+    # Run cleanup if needed to prevent disk space from running out
+    cleanup_temp_folder_if_needed()
+
     # Download audio file
     audio_file = audio.download(output_path='temp', filename=title)
 
-    # Path to temporary audio file
-    temp_audio_path = os.path.join('temp', title)
-
-    # Convert to MP3 format
+    # Write the file on disk as an MP3 file
     mp3_path = os.path.join('temp', title)
     audio_clip = AudioFileClip(temp_audio_path)
     audio_clip.write_audiofile(mp3_path)
@@ -52,15 +60,22 @@ def is_valid_youtube_url(url):
     pattern = r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
     return re.match(pattern, url)
 
-def clear_temp_folder():
+def cleanup_temp_folder_if_needed():
     folder = 'temp'
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        except Exception as e:
-            print(f"Failed to delete file {file_path}: {e}")
+    total_size = sum(os.path.getsize(file) for file in glob.glob(f"{folder}/*"))
+    total_size_gb = total_size / (1024 ** 3)
 
+    if total_size_gb > 2:
+        try:
+            print("Cleaning up temp folder...")
+            for file in glob.glob(f"{folder}/*"):
+                os.remove(file)
+            print("Temp folder cleaned.")
+        except Exception as e:
+            print(f"Failed to delete file {file}: {e}")
+
+    else:
+        print("No cleanup needed.")
+        
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=13000)
