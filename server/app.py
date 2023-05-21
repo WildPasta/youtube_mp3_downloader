@@ -21,6 +21,7 @@ def download():
     # Check if it is a valid YouTube URL
     if not is_valid_youtube_url(url):
         error_message = "Invalid YouTube URL"
+        write_log(error_message)
         return redirect(url_for('index', error=error_message))
 
     # Extract audio from YouTube video
@@ -30,21 +31,25 @@ def download():
 
     if audio.mime_type not in allowed_mime_types:
         error_message = "Unsupported audio format"
+        write_log(error_message)
         return redirect(url_for('index', error=error_message))
     
     if audio.filesize_gb > 1:
         error_message = "File is too large to be downloaded"
+        write_log(error_message)
         return redirect(url_for('index', error=error_message))
     
     # Check if the temp folder exists
     if not os.path.exists('temp'):  
         os.makedirs('temp')
     temp_audio_path = os.path.join('temp', title)
+
     # Run cleanup if needed to prevent disk space from running out
     cleanup_temp_folder_if_needed()
 
     # Download audio file
     audio_file = audio.download(output_path='temp', filename=title)
+    print("Audio file downloaded: ", title)
 
     # Write the file on disk as an MP3 file
     mp3_path = os.path.join('temp', title)
@@ -76,6 +81,9 @@ def cleanup_temp_folder_if_needed():
 
     else:
         print("No cleanup needed.")
+
+def write_log(message):
+    print("An error occurred:", message)
         
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=13000)
