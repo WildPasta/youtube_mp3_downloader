@@ -35,8 +35,8 @@ YouTube Downloader is a web application built with Flask that allows users to do
 
 ## Todo
 
-[ ] CSRF protection with Flask-WTF
-[ ] Implementation of Asynchronous download for multiple client usage
+- [ ] CSRF protection with Flask-WTF
+- [ ] Implementation of Asynchronous download for multiple client usage
 
 ## Contribution
 
