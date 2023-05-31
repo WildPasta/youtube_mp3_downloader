@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for
-from pytube import YouTube
-from moviepy.editor import AudioFileClip
+# Python standard libraries
+import argparse
 import os
 import re
-from urllib.parse import quote
 import glob
+from urllib.parse import quote
+
+# Third-party libraries
+from flask import Flask, render_template, request, send_file, redirect, url_for
+from pytube import YouTube
 
 app = Flask(__name__)
 
@@ -39,10 +42,8 @@ def download():
         write_log(error_message)
         return redirect(url_for('index', error=error_message))
     
-    # Check if the temp folder exists
-    if not os.path.exists('temp'):  
-        os.makedirs('temp')
-    temp_audio_path = os.path.join('temp', title)
+    # Create temp folder if it doesn't exist 
+    os.makedirs('temp', exist_ok=True)
 
     # Run cleanup if needed to prevent disk space from running out
     cleanup_temp_folder_if_needed()
@@ -52,14 +53,15 @@ def download():
     print("Audio file downloaded: ", title)
 
     # Write the file on disk as an MP3 file
-    mp3_path = os.path.join('temp', title)
-    audio_clip = AudioFileClip(temp_audio_path)
-    audio_clip.write_audiofile(mp3_path)
+    base, ext = os.path.splitext(audio_file)
+    mp3_file = base + '.mp3'
+    os.rename(audio_file, mp3_file)
 
     # Return the MP3 file as a download
-    response = send_file(mp3_path, as_attachment=True)
+    response = send_file(mp3_file, as_attachment=True)
     response.headers["Content-Disposition"] = "attachment; filename={}".format(title)
     return response
+
 
 def is_valid_youtube_url(url):
     pattern = r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
@@ -86,4 +88,9 @@ def write_log(message):
     print("An error occurred:", message)
         
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=13000)
+    parser = argparse.ArgumentParser(description='Youtube Download')
+    parser.add_argument('-p', '--port', type=int, default=13000, help='Specify the port number')
+    args = parser.parse_args()
+    port = args.port
+    app.run(host='0.0.0.0', port=port)
+
