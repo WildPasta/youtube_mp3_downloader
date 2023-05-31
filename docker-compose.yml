@@ -2,8 +2,8 @@ version: '3'
 
 services:
   youtube_downloader:
-    image: wildpasta/youtube_downloader:1.0.0
+    image: wildpasta/youtube_downloader:1.1.0
     container_name: youtube_downloader
-    restart: always
+    restart: unless-stopped
     ports:
       - "13000:13000"
