@@ -24,9 +24,9 @@ YouTube Downloader is a web application built with Flask that allows users to do
 
 1. Start the application on your server:
    ```shell
-   python app.py
+   python app.py -p 8080
    ```
-2. Open your web browser and visit `http://<your_server_hostname>:13000`.
+2. Open your web browser and visit `http://<your_server_hostname>:8080`.
 
 3. Enter the YouTube video URL in the provided input field.
 
@@ -34,6 +34,7 @@ YouTube Downloader is a web application built with Flask that allows users to do
 
 5. The application will extract the audio from the YouTube video and provide a download link for the converted MP3 file. Simply click the download link to save the file to your local machine.
 
+*Note: Default port for the application is 14000. If you don't specify `-p` or `--port` flag then the application will run on port 14000.*
 ## Docker installation
 
 Clone the repository:
@@ -43,7 +44,7 @@ git clone https://github.com/WildPasta/youtube_mp3_downloader.git
 
 Build the docker image:
 ```shell
-docker build -t wildpasta/youtube_downloader:1.0.0 .
+docker build -t wildpasta/youtube_downloader:1.1.0 .
 ```
 
 Run the docker container using the docker-compose.yml file:
