@@ -1,3 +1,10 @@
+##########
+# Author: wildpasta
+# Description: A simple Flask app that downloads audio from YouTube videos
+# Usage: python app.py -p <port>
+# Example: python app.py -p 13000
+##########
+
 # Python standard libraries
 import argparse
 import os
@@ -63,11 +70,29 @@ def download():
     return response
 
 
-def is_valid_youtube_url(url):
+def is_valid_youtube_url(url: str) -> bool:
+    """
+    purpose:
+        Check if the URL is a valid YouTube URL
+    input:
+        url: str
+    output:
+        bool
+    """
+
     pattern = r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
     return re.match(pattern, url)
 
-def cleanup_temp_folder_if_needed():
+def cleanup_temp_folder_if_needed() -> None:
+    """
+    purpose: 
+        Delete files in temp folder if the total size is greater than 1 GB
+    input: 
+        None
+    output: 
+        None
+    """
+
     folder = 'temp'
     total_size = sum(os.path.getsize(file) for file in glob.glob(f"{folder}/*"))
     total_size_gb = total_size / (1024 ** 3)
@@ -80,11 +105,19 @@ def cleanup_temp_folder_if_needed():
             print("Temp folder cleaned.")
         except Exception as e:
             print(f"Failed to delete file {file}: {e}")
-
     else:
         print("No cleanup needed.")
 
-def write_log(message):
+def write_log(message: str) -> None:
+    """
+    purpose:
+        Write error message to log file
+    input:
+        message: str
+    output:
+        None
+    """
+    
     print("An error occurred:", message)
         
 if __name__ == '__main__':
