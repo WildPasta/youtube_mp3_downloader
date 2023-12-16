@@ -15,6 +15,9 @@ from urllib.parse import quote
 # Third-party libraries
 from flask import Flask, render_template, request, send_file, redirect, url_for
 from pytube import YouTube
+from typing import Tuple
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 
@@ -25,7 +28,7 @@ def index():
 
 @app.route('/download', methods=['POST'])
 def download(): 
-    allowed_mime_types = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/mpeg']
+    ALLOWED_MIME_TYPES = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/mpeg']
     url = request.form['url']
 
     # Check if it is a valid YouTube URL
@@ -39,7 +42,7 @@ def download():
     title = quote(youtube.title + '.mp3', safe='')
     audio = youtube.streams.filter(only_audio=True).first()
 
-    if audio.mime_type not in allowed_mime_types:
+    if audio.mime_type not in ALLOWED_MIME_TYPES:
         error_message = "Unsupported audio format"
         write_log(error_message)
         return redirect(url_for('index', error=error_message))
@@ -69,6 +72,61 @@ def download():
     response.headers["Content-Disposition"] = "attachment; filename={}".format(title)
     return response
 
+@app.route('/batch_download', methods=['POST'])
+def batch_download():
+    # Check if the request contains a file
+    if 'file' not in request.files:
+        error_message = "No file part"
+        write_log(error_message)
+        return redirect(url_for('index', error=error_message))
+
+    file = request.files['file']
+
+    # Check if the file is empty
+    if file.filename == '':
+        error_message = "No selected file"
+        write_log(error_message)
+        return redirect(url_for('index', error=error_message))
+
+    # Check if the file has an allowed extension
+    if not allowed_file(file.filename):
+        error_message = "Invalid file type"
+        write_log(error_message)
+        return redirect(url_for('index', error=error_message))
+
+    # Process the URLs in the file without saving it to the server
+    success_count, failure_count = process_urls_in_memory(file)
+
+    return f"Batch download complete. {success_count} succeeded, {failure_count} failed."
+
+def process_urls_in_memory(file) -> Tuple[int, int]:
+    """
+    Process URLs in a file (passed as a Flask FileStorage object) and download audio for each URL.
+    """
+    success_count = 0
+    failure_count = 0
+
+    # Read the file content from memory
+    file_content = file.stream.read().decode('utf-8').splitlines()
+
+    for line in file_content:
+        url = line.strip()
+        if is_valid_youtube_url(url):
+            try:
+                download_audio(url)
+                success_count += 1
+            except Exception as e:
+                print(f"Failed to download audio from {url}: {e}")
+                failure_count += 1
+        else:
+            print(f"Invalid YouTube URL: {url}")
+            failure_count += 1
+
+    return success_count, failure_count
+
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = ['txt']
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def is_valid_youtube_url(url: str) -> bool:
     """
