@@ -18,6 +18,15 @@
             </div>
             <button type="submit" class="btn btn-primary">Download</button>
         </form>
+        
+        <form action="/batch_download" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Upload a file containing YouTube URLs:</label>
+                <input type="file" class="form-control-file" id="file" name="file" accept=".txt">
+            </div>
+            <button type="submit" class="btn btn-primary">Batch Download</button>
+        </form>
+        
     </div>
 </body>
 
