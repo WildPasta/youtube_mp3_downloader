@@ -5,10 +5,9 @@ LABEL org.opencontainers.image.maintainer="Wildpasta <chauve.richard@protonmail.
 LABEL org.opencontainers.image.repository="https://github.com/WildPasta/youtube_mp3_downloader"
 LABEL org.opencontainers.image.description="Docker container for Youtube Downloader"
 
-ENV DIR=/home/youtube_downloader/
-WORKDIR $DIR/server
+WORKDIR /home/youtube_downloader/server
 
-COPY server $DIR/server
+COPY server .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
