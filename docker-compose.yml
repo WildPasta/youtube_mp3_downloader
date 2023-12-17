@@ -2,7 +2,7 @@ version: '3'
 
 services:
   youtube_downloader:
-    image: wildpasta/youtube_downloader:1.1.0
+    image: wildpasta/youtube_downloader:1.2.0
     container_name: youtube_downloader
     restart: unless-stopped
     ports:
