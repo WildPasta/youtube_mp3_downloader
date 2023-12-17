@@ -10,132 +10,190 @@ import argparse
 import os
 import re
 import glob
-from urllib.parse import quote
+import uuid
+import zipfile
+from urllib.parse import quote, unquote
 
 # Third-party libraries
 from flask import Flask, render_template, request, send_file, redirect, url_for
 from pytube import YouTube
-from typing import Tuple
-from werkzeug.utils import secure_filename
-
 
 app = Flask(__name__)
+LOCAL_DOWNLOAD_FOLDER = 'temp'
+ALLOWED_EXTENSIONS = {'txt'}
+ALLOWED_MIME_TYPES = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/mpeg']
 
-@app.route('/')
-def index():
-    error_message = request.args.get('error')
-    return render_template('index.html', error_message=error_message)
+@app.route('/', methods=['GET'])
+def index() -> None:
+    """ 
+    purpose: 
+        render the index page
+    input:  
+        None
+    output:
+        None
+    """
+
+    try:
+        error_message = request.args.get('error')
+        return render_template('index.html', error_message=error_message)
+    except Exception:
+        return redirect(url_for('index', error="An internal error occurred..."))
 
 @app.route('/download', methods=['POST'])
-def download(): 
-    ALLOWED_MIME_TYPES = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/mpeg']
-    url = request.form['url']
+def download() -> None:
+    """ 
+    purpose:
+        download audio from YouTube video
+    input:
+        None
+    output:
+        None
+    """
 
-    # Check if it is a valid YouTube URL
+    try:
+        os.makedirs(LOCAL_DOWNLOAD_FOLDER, exist_ok=True)
+        url = request.form['url']
+
+        mp3_file, title = download_audio(url)
+        print(f'Audio file downloaded: {title}')
+
+        # Send the file as a download
+        response = send_file(mp3_file, as_attachment=True)
+        response.headers["Content-Disposition"] = "attachment; filename={}".format(title)
+        return response
+
+    except Exception:
+        return redirect(url_for('index', error="An internal error occurred..."))
+
+@app.route('/batch_download', methods=['POST'])
+def batch_download():
+    """
+    purpose:
+        download audio from YouTube videos in batch
+    input:
+        None
+    output: 
+        None
+    """ 
+
+    try:
+        os.makedirs(LOCAL_DOWNLOAD_FOLDER, exist_ok=True)
+        urls = []
+
+        # Check if a file is provided
+        if 'file' in request.files:
+            file = request.files['file']
+            
+            # Ensure the file has an allowed extension
+            if file and allowed_file(file.filename):
+                # Read URLs from the file
+                urls_from_file = [line.decode('utf-8').strip() for line in file.readlines()]
+                urls.extend(urls_from_file)
+
+        # Ensure at least one URL is provided
+        if not urls:
+            error_message = "No URLs provided for download."
+            return redirect(url_for('index', error=error_message))
+
+        # Run cleanup if needed to prevent disk space from running out
+        cleanup_temp_folder_if_needed()
+
+        zip_filename = str(uuid.uuid4())[:8] + '_music_archive.zip'
+        zip_filepath = os.path.join(LOCAL_DOWNLOAD_FOLDER, zip_filename)
+
+        with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
+            for url in urls:
+                download_and_add_to_zip(zip_file, url)
+
+        # Return the zip file as a download
+        response = send_file(zip_filepath, as_attachment=True)
+        response.headers["Content-Disposition"] = "attachment; filename={}".format(zip_filename)
+        return response
+
+    except Exception:
+        return redirect(url_for('index', error="An internal error occurred..."))
+
+def download_and_add_to_zip(zip_file: str, url: str) -> None:
+    """
+    purpose: 
+        download audio from YouTube video and add to zip file
+    input:
+        zip_file: zip file object
+        url: YouTube URL
+    output:
+        None
+    """
+
+    try:
+        mp3_file, title = download_audio(url)
+        zip_file.write(mp3_file, os.path.basename(unquote(mp3_file)))
+        print("Audio file downloaded and added to zip:", title)
+    except Exception as e:
+        print(f"Error downloading {url}: {e}")
+
+def allowed_file(filename: str) -> bool:
+    """
+    purpose:
+        check if the file has an allowed extension
+    input:  
+        filename: name of the file
+    output: 
+        True if the file has an allowed extension, False otherwise
+    """
+
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def download_audio(url: str) -> tuple:
+    """
+    purpose: 
+        download audio from YouTube video
+    input: 
+        url: YouTube URL
+    output: 
+        mp3_file: path to the downloaded MP3 file
+        title: title of the YouTube video
+    """
+
     if not is_valid_youtube_url(url):
-        error_message = "Invalid YouTube URL"
-        write_log(error_message)
-        return redirect(url_for('index', error=error_message))
-
+        print(f"Invalid YouTube URL: {url}")
+        return
+    
     # Extract audio from YouTube video
     youtube = YouTube(url)
     title = quote(youtube.title + '.mp3', safe='')
     audio = youtube.streams.filter(only_audio=True).first()
 
     if audio.mime_type not in ALLOWED_MIME_TYPES:
-        error_message = "Unsupported audio format"
-        write_log(error_message)
-        return redirect(url_for('index', error=error_message))
+        print(f"Unsupported audio format: {audio.mime_type} for {url}")
+        return
     
-    if audio.filesize_gb > 1:
-        error_message = "File is too large to be downloaded"
-        write_log(error_message)
-        return redirect(url_for('index', error=error_message))
-    
-    # Create temp folder if it doesn't exist 
-    os.makedirs('temp', exist_ok=True)
+    elif audio.filesize_gb > 1:
+        print(f"File is too large to be downloaded: {title}")
+        return
 
     # Run cleanup if needed to prevent disk space from running out
     cleanup_temp_folder_if_needed()
 
     # Download audio file
-    audio_file = audio.download(output_path='temp', filename=title)
-    print("Audio file downloaded: ", title)
+    audio_file = audio.download(output_path=LOCAL_DOWNLOAD_FOLDER, filename=title)
+    print(f"Audio file downloaded: {title}")
 
     # Write the file on disk as an MP3 file
     base, ext = os.path.splitext(audio_file)
     mp3_file = base + '.mp3'
     os.rename(audio_file, mp3_file)
 
-    # Return the MP3 file as a download
-    response = send_file(mp3_file, as_attachment=True)
-    response.headers["Content-Disposition"] = "attachment; filename={}".format(title)
-    return response
-
-@app.route('/batch_download', methods=['POST'])
-def batch_download():
-    # Check if the request contains a file
-    if 'file' not in request.files:
-        error_message = "No file part"
-        write_log(error_message)
-        return redirect(url_for('index', error=error_message))
-
-    file = request.files['file']
-
-    # Check if the file is empty
-    if file.filename == '':
-        error_message = "No selected file"
-        write_log(error_message)
-        return redirect(url_for('index', error=error_message))
-
-    # Check if the file has an allowed extension
-    if not allowed_file(file.filename):
-        error_message = "Invalid file type"
-        write_log(error_message)
-        return redirect(url_for('index', error=error_message))
-
-    # Process the URLs in the file without saving it to the server
-    success_count, failure_count = process_urls_in_memory(file)
-
-    return f"Batch download complete. {success_count} succeeded, {failure_count} failed."
-
-def process_urls_in_memory(file) -> Tuple[int, int]:
-    """
-    Process URLs in a file (passed as a Flask FileStorage object) and download audio for each URL.
-    """
-    success_count = 0
-    failure_count = 0
-
-    # Read the file content from memory
-    file_content = file.stream.read().decode('utf-8').splitlines()
-
-    for line in file_content:
-        url = line.strip()
-        if is_valid_youtube_url(url):
-            try:
-                download_audio(url)
-                success_count += 1
-            except Exception as e:
-                print(f"Failed to download audio from {url}: {e}")
-                failure_count += 1
-        else:
-            print(f"Invalid YouTube URL: {url}")
-            failure_count += 1
-
-    return success_count, failure_count
-
-def allowed_file(filename):
-    ALLOWED_EXTENSIONS = ['txt']
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return mp3_file, title
 
 def is_valid_youtube_url(url: str) -> bool:
     """
-    purpose:
-        Check if the URL is a valid YouTube URL
+    purpose: 
+        check if the URL is a valid YouTube URL
     input:
-        url: str
+        url: YouTube URL
     output:
-        bool
+        True if the URL is a valid YouTube URL, False otherwise
     """
 
     pattern = r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
@@ -143,15 +201,15 @@ def is_valid_youtube_url(url: str) -> bool:
 
 def cleanup_temp_folder_if_needed() -> None:
     """
-    purpose: 
-        Delete files in temp folder if the total size is greater than 1 GB
-    input: 
+    purpose:
+        delete files in temp folder if the total size is greater than 1 GB
+    input:
         None
-    output: 
+    output:
         None
     """
 
-    folder = 'temp'
+    folder = LOCAL_DOWNLOAD_FOLDER
     total_size = sum(os.path.getsize(file) for file in glob.glob(f"{folder}/*"))
     total_size_gb = total_size / (1024 ** 3)
 
@@ -166,22 +224,10 @@ def cleanup_temp_folder_if_needed() -> None:
     else:
         print("No cleanup needed.")
 
-def write_log(message: str) -> None:
-    """
-    purpose:
-        Write error message to log file
-    input:
-        message: str
-    output:
-        None
-    """
-    
-    print("An error occurred:", message)
-        
 if __name__ == '__main__':
+    os.makedirs(LOCAL_DOWNLOAD_FOLDER, exist_ok=True)
     parser = argparse.ArgumentParser(description='Youtube Download')
     parser.add_argument('-p', '--port', type=int, default=13000, help='Specify the port number')
     args = parser.parse_args()
     port = args.port
     app.run(host='0.0.0.0', port=port)
-
