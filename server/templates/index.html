@@ -1,33 +1,205 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Youtube Download</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>YouTube MP3 Downloader</title>
+    <style>
+        :root {
+            --bg: #f4f6fb;
+            --card: #ffffff;
+            --text: #1c2434;
+            --muted: #64748b;
+            --accent: #e5322d;
+            --accent-hover: #c7271f;
+            --border: #e2e8f0;
+            --error-bg: #fdecea;
+            --error-text: #9b1c1c;
+            --shadow: 0 8px 24px rgba(15, 23, 42, .06);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #10131a;
+                --card: #1a1f2b;
+                --text: #e6e9f0;
+                --muted: #94a3b8;
+                --accent: #ff4d45;
+                --accent-hover: #ff6b64;
+                --border: #2a3242;
+                --error-bg: #3b1d1d;
+                --error-text: #fda4a4;
+                --shadow: 0 8px 24px rgba(0, 0, 0, .35);
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        header { text-align: center; margin-bottom: 1.75rem; }
+        h1 { font-size: 1.6rem; margin: 0 0 .4rem; letter-spacing: -.02em; }
+        h1 .dot { color: var(--accent); }
+        header p { margin: 0; color: var(--muted); font-size: .95rem; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.25rem;
+        }
+        .card h2 { font-size: 1.05rem; margin: 0 0 1rem; display: flex; align-items: center; gap: .5rem; }
+        .card h2 .icon { font-size: 1.1rem; }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: .65rem .8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: .95rem;
+            font-family: inherit;
+        }
+        input[type="text"]:focus, input[type="file"]:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 1px;
+            border-color: transparent;
+        }
+        input[type="file"] { padding: .45rem .6rem; }
+        .hint { color: var(--muted); font-size: .8rem; margin: .5rem 0 0; }
+        button {
+            width: 100%;
+            margin-top: 1rem;
+            padding: .7rem 1rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .15s ease;
+        }
+        button:hover { background: var(--accent-hover); }
+        button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+        button:disabled { opacity: .6; cursor: wait; }
+        #error-banner {
+            display: none;
+            width: 100%;
+            max-width: 460px;
+            margin-bottom: 1.25rem;
+            padding: .8rem 1rem;
+            border-radius: 8px;
+            background: var(--error-bg);
+            color: var(--error-text);
+            font-size: .9rem;
+        }
+        #status {
+            display: none;
+            text-align: center;
+            color: var(--muted);
+            font-size: .9rem;
+            margin-top: .25rem;
+        }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+            border: 2px solid var(--muted);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin-right: .4rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        footer { color: var(--muted); font-size: .8rem; margin-top: 1rem; }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Youtube Download</h1>
-        {% if error_message %}
-        <div class="alert alert-danger" role="alert">
-            {{ error_message }}
-        </div>
-        {% endif %}
-        <form action="/download" method="post" autocomplete="off">
-            <div class="form-group">
-                <input type="text" class="form-control" id="url" name="url" placeholder="Enter YouTube URL" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Download</button>
-        </form>
-        
-        <form action="/batch_download" method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="file">Upload a file containing YouTube URLs:</label>
-                <input type="file" class="form-control-file" id="file" name="file" accept=".txt">
-            </div>
-            <button type="submit" class="btn btn-primary">Batch Download</button>
-        </form>
-        
-    </div>
-</body>
+    <header>
+        <h1>YouTube<span class="dot">▶</span> MP3 Downloader</h1>
+        <p>Download the audio track of any YouTube video as MP3</p>
+    </header>
 
+    <div id="error-banner" role="alert" aria-live="polite"></div>
+    {% if error_message %}
+    <script>
+        window.addEventListener('DOMContentLoaded', function () {
+            showError('{{ error_message | e }}');
+        });
+    </script>
+    {% endif %}
+
+    <form class="card" action="/download" method="post" autocomplete="off" target="download-frame" data-download>
+        <h2><span class="icon">🎵</span> Single download</h2>
+        <label for="url">YouTube URL</label>
+        <input type="text" id="url" name="url" placeholder="https://www.youtube.com/watch?v=..." required autofocus>
+        <p class="hint">Video, Shorts and youtu.be links are supported.</p>
+        <button type="submit">Download MP3</button>
+    </form>
+
+    <form class="card" action="/batch_download" method="post" enctype="multipart/form-data" target="download-frame" data-download>
+        <h2><span class="icon">📦</span> Batch download</h2>
+        <label for="file">Text file with one URL per line</label>
+        <input type="file" id="file" name="file" accept=".txt" required>
+        <p class="hint">All files are converted and returned in a single ZIP archive.</p>
+        <button type="submit">Download ZIP</button>
+    </form>
+
+    <p id="status"><span class="spinner"></span><span id="status-text">Preparing your download… this can take a while.</span></p>
+
+    <iframe name="download-frame" id="download-frame" src="about:blank" style="display:none" title="download target"></iframe>
+
+    <footer>Files larger than 1&nbsp;GB are skipped.</footer>
+
+    <script>
+        var busy = false;
+        var frame = document.getElementById('download-frame');
+        var status = document.getElementById('status');
+        var buttons = document.querySelectorAll('form[data-download] button');
+
+        function showError(message) {
+            var banner = document.getElementById('error-banner');
+            banner.textContent = message;
+            banner.style.display = 'block';
+        }
+
+        function setBusy(on) {
+            busy = on;
+            status.style.display = on ? 'block' : 'none';
+            buttons.forEach(function (b) { b.disabled = on; });
+        }
+
+        document.querySelectorAll('form[data-download]').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                document.getElementById('error-banner').style.display = 'none';
+                setBusy(true);
+            });
+        });
+
+        frame.addEventListener('load', function () {
+            if (!busy) { return; }
+            try {
+                var href = frame.contentWindow.location.href;
+                var message = new URL(href).searchParams.get('error');
+                if (message) { showError(message); }
+            } catch (e) {
+                /* cross-origin or attachment response: nothing to surface */
+            }
+            setBusy(false);
+        });
+    </script>
+</body>
 </html>
