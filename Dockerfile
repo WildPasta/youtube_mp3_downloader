@@ -1,5 +1,7 @@
 FROM denoland/deno:bin-2.9.8 AS deno
 
+FROM ghcr.io/astral-sh/uv:0.13.6 AS uv
+
 FROM python:3.13-slim
 
 ARG VERSION=2.0.0
@@ -9,13 +11,16 @@ LABEL org.opencontainers.image.repository="https://github.com/WildPasta/youtube_
 LABEL org.opencontainers.image.description="Docker container for Youtube Downloader"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
 # ffmpeg is required for MP3 conversion, Deno for YouTube JavaScript challenges
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=deno /deno /usr/local/bin/deno
+COPY --from=uv /uv /uvx /usr/local/bin/
 
 RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin appuser \
     && mkdir -p /home/youtube_downloader/server \
@@ -23,12 +28,14 @@ RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin appuser \
 
 WORKDIR /home/youtube_downloader/server
 
-COPY --chown=appuser:appuser server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY --chown=appuser:appuser pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev && chown -R appuser:appuser .venv
 
 COPY --chown=appuser:appuser server/ .
 
 USER appuser
+
+ENV PATH="/home/youtube_downloader/server/.venv/bin:${PATH}"
 
 EXPOSE 13000
 

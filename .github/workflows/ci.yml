@@ -18,7 +18,8 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
-      - run: uvx ruff check --select E4,E7,E9,F .
+      - run: uv sync
+      - run: uv run ruff check --select E4,E7,E9,F .
 
   build:
     runs-on: ubuntu-24.04
@@ -38,5 +39,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
-      - run: uv run --with-requirements requirements.txt python -c "import app"
+      - run: uv sync --frozen
+      - run: uv run python -c "import app"
         working-directory: server
