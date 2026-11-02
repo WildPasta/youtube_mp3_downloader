@@ -31,7 +31,6 @@ cd youtube_mp3_downloader
 python -m pip install -r server/requirements.txt
 ```
 
-
 ## Usage (CLI)
 
 1. Start the application:
@@ -42,7 +41,7 @@ python -m pip install -r server/requirements.txt
 
 3. Either provide a YouTube URL in the form or submit a text (`.txt`) file formatted as follow:
 
-```
+```text
 https://www.youtube.com/watch?v=abc
 https://youtu.be/def
 https://www.youtube.com/shorts/ghi
@@ -56,26 +55,23 @@ https://www.youtube.com/shorts/ghi
 ## Docker installation
 
 Clone the repository:
+
 ```shell
 git clone https://github.com/WildPasta/youtube_mp3_downloader.git
 ```
 
 Build and run using docker compose (builds the image locally):
+
 ```shell
 docker compose up -d --build
 ```
 
 Or build manually:
+
 ```shell
 docker build -t youtube_mp3_downloader:2.0.0 .
 docker run -d -p 13000:13000 youtube_mp3_downloader:2.0.0
 ```
-
-## CI/CD
-
-Every pull request runs linting (ruff), a Docker image build and import smoke tests on Python 3.11–3.13.
-Pushing a `vX.Y.Z` tag validates the Docker build and creates a GitHub Release with generated notes.
-Dependabot submits weekly grouped updates for GitHub Actions, Python dependencies and Docker base images.
 
 ## Todo
 
