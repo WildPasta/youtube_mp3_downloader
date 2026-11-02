@@ -1,6 +1,6 @@
 # Reporting Security Issues
 
-Please report any security issues you discovered in the bot to chauve.richard@protonmail.com
+Please report any security issues you discovered in the bot to contact@pastabox.dev.
 
 We will assess the risk, plus make a fix available before we create a GitHub issue.
 
