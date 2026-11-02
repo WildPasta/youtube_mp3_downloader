@@ -1,7 +1,7 @@
 services:
   youtube_downloader:
     build: .
-    image: youtube_mp3_downloader:2.0.0
+    image: youtube_mp3_downloader:2.1.0
     container_name: youtube_downloader
     restart: unless-stopped
     ports:

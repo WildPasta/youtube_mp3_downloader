@@ -4,7 +4,7 @@ FROM ghcr.io/astral-sh/uv:0.13.6 AS uv
 
 FROM python:3.13-slim
 
-ARG VERSION=2.0.0
+ARG VERSION=2.1.0
 LABEL org.opencontainers.image.version="${VERSION}"
 LABEL org.opencontainers.image.maintainer="Wildpasta <contact@pastabox.dev>"
 LABEL org.opencontainers.image.repository="https://github.com/WildPasta/youtube_mp3_downloader"

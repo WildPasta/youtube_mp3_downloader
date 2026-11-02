@@ -1,6 +1,6 @@
 [project]
 name = "youtube-mp3-downloader"
-version = "2.0.0"
+version = "2.1.0"
 description = "Web application to download audio from YouTube videos as MP3"
 requires-python = ">=3.11"
 dependencies = [

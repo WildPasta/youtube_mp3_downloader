@@ -69,8 +69,8 @@ docker compose up -d --build
 Or build manually:
 
 ```shell
-docker build -t youtube_mp3_downloader:2.0.0 .
-docker run -d -p 13000:13000 youtube_mp3_downloader:2.0.0
+docker build -t youtube_mp3_downloader:2.1.0 .
+docker run -d -p 13000:13000 youtube_mp3_downloader:2.1.0
 ```
 
 ## Todo
