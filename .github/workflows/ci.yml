@@ -38,5 +38,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
-      - run: uv run --with -r requirements.txt python -c "import app"
+      - run: uv run --with-requirements requirements.txt python -c "import app"
         working-directory: server
