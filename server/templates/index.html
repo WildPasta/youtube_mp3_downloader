@@ -45,8 +45,35 @@
             padding: 2rem 1rem;
         }
         header { text-align: center; margin-bottom: 1.75rem; }
-        h1 { font-size: 1.6rem; margin: 0 0 .4rem; letter-spacing: -.02em; }
-        h1 .dot { color: var(--accent); }
+        h1 {
+            font-size: 1.6rem;
+            margin: 0 0 .4rem;
+            letter-spacing: -.02em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .45rem;
+            flex-wrap: wrap;
+        }
+        .play {
+            display: inline-block;
+            width: 20px;
+            height: 14px;
+            flex: none;
+            background: var(--accent);
+            border-radius: 4px;
+            position: relative;
+        }
+        .play::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-35%, -50%);
+            border-style: solid;
+            border-width: 3.5px 0 3.5px 6px;
+            border-color: transparent transparent transparent #fff;
+        }
         header p { margin: 0; color: var(--muted); font-size: .95rem; }
         .card {
             background: var(--card);
@@ -60,6 +87,37 @@
         }
         .card h2 { font-size: 1.05rem; margin: 0 0 1rem; display: flex; align-items: center; gap: .5rem; }
         .card h2 .icon { font-size: 1.1rem; }
+        .help {
+            margin-left: auto;
+            flex: none;
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            margin-top: 0;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--bg);
+            color: var(--muted);
+            font-size: .72rem;
+            font-weight: 700;
+            font-family: inherit;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .help:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+        .example {
+            display: none;
+            margin: .25rem 0 1rem;
+            padding: .7rem .9rem;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--muted);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: .76rem;
+            white-space: pre;
+            overflow-x: auto;
+        }
         input[type="text"], input[type="file"] {
             width: 100%;
             padding: .65rem .8rem;
@@ -129,7 +187,7 @@
 </head>
 <body>
     <header>
-        <h1>YouTube<span class="dot">▶</span> MP3 Downloader</h1>
+        <h1>YouTube<span class="play" aria-hidden="true"></span>MP3 Downloader</h1>
         <p>Download the audio track of any YouTube video as MP3</p>
     </header>
 
@@ -151,7 +209,13 @@
     </form>
 
     <form class="card" action="/batch_download" method="post" enctype="multipart/form-data" target="download-frame" data-download>
-        <h2><span class="icon">📦</span> Batch download</h2>
+        <h2>
+            <span class="icon">📦</span> Batch download
+            <button type="button" class="help" id="help-toggle" aria-label="Show an example input file" aria-expanded="false" aria-controls="batch-example">?</button>
+        </h2>
+        <div class="example" id="batch-example">https://www.youtube.com/watch?v=aqz-KE-bpKQ
+https://youtu.be/dQw4w9WgXcQ
+https://www.youtube.com/shorts/3tmdnTG9eCQ</div>
         <label for="file">Text file with one URL per line</label>
         <input type="file" id="file" name="file" accept=".txt" required>
         <p class="hint">All files are converted and returned in a single ZIP archive.</p>
@@ -187,6 +251,14 @@
                 document.getElementById('error-banner').style.display = 'none';
                 setBusy(true);
             });
+        });
+
+        var helpBtn = document.getElementById('help-toggle');
+        var example = document.getElementById('batch-example');
+        helpBtn.addEventListener('click', function () {
+            var open = example.style.display === 'block';
+            example.style.display = open ? 'none' : 'block';
+            helpBtn.setAttribute('aria-expanded', String(!open));
         });
 
         frame.addEventListener('load', function () {
