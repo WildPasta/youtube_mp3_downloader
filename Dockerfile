@@ -3,7 +3,7 @@ FROM denoland/deno:latest AS deno
 FROM python:3.13-slim
 
 LABEL org.opencontainers.image.version="1.0"
-LABEL org.opencontainers.image.maintainer="Wildpasta <chauve.richard@protonmail.com>"
+LABEL org.opencontainers.image.maintainer="Wildpasta <contact@pastabox.dev>"
 LABEL org.opencontainers.image.repository="https://github.com/WildPasta/youtube_mp3_downloader"
 LABEL org.opencontainers.image.description="Docker container for Youtube Downloader"
 

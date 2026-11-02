@@ -67,7 +67,7 @@ docker-compose up -d
 ## Contribution
 
 Feel free to contribute by adding a new feature!
-You can reach out at chauve.richard@protonmail.com.
+You can reach out at contact@pastabox.dev.
 
 ## License
 
