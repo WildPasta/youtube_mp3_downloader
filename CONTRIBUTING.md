@@ -35,9 +35,8 @@ docs: clarify local setup in README
 
 - Releases are tagged `vX.Y.Z` on `main`
 - Pushing a tag triggers the Release workflow, which:
-  - builds and pushes the Docker image to `ghcr.io/wildpasta/youtube_mp3_downloader` (tag + `latest`)
+  - builds and pushes the Docker image to `ghcr.io/wildpasta/youtube_mp3_downloader` (tag + `latest`), injecting the tag into the image's version label
   - creates a GitHub Release with auto-generated notes
-- Bump the `org.opencontainers.image.version` label in the `Dockerfile` to match the tag
 
 ## Local development
 

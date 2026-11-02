@@ -18,7 +18,8 @@ jobs:
       - run: |
           IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
           TAG="${GITHUB_REF_NAME}"
-          docker build -t "$IMAGE:$TAG" -t "$IMAGE:latest" .
+          VERSION="${TAG#v}"
+          docker build --build-arg VERSION="$VERSION" -t "$IMAGE:$TAG" -t "$IMAGE:latest" .
           docker push "$IMAGE:$TAG"
           docker push "$IMAGE:latest"
 
