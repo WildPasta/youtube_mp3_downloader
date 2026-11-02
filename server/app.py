@@ -16,12 +16,11 @@ from urllib.parse import quote, unquote
 
 # Third-party libraries
 from flask import Flask, render_template, request, send_file, redirect, url_for
-from pytube import YouTube
+import yt_dlp
 
 app = Flask(__name__)
 LOCAL_DOWNLOAD_FOLDER = 'temp'
 ALLOWED_EXTENSIONS = {'txt'}
-ALLOWED_MIME_TYPES = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/mpeg']
 
 @app.route('/', methods=['GET'])
 def index() -> None:
@@ -146,8 +145,8 @@ def allowed_file(filename: str) -> bool:
 
 def download_audio(url: str) -> tuple:
     """
-    purpose: 
-        download audio from YouTube video
+    purpose:
+        download audio from YouTube video and convert it to MP3
     input: 
         url: YouTube URL
     output: 
@@ -158,31 +157,39 @@ def download_audio(url: str) -> tuple:
     if not is_valid_youtube_url(url):
         print(f"Invalid YouTube URL: {url}")
         return
-    
-    # Extract audio from YouTube video
-    youtube = YouTube(url)
-    title = quote(youtube.title + '.mp3', safe='')
-    audio = youtube.streams.filter(only_audio=True).first()
 
-    if audio.mime_type not in ALLOWED_MIME_TYPES:
-        print(f"Unsupported audio format: {audio.mime_type} for {url}")
-        return
-    
-    elif audio.filesize_gb > 1:
-        print(f"File is too large to be downloaded: {title}")
-        return
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': os.path.join(LOCAL_DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'quiet': True,
+        'no_warnings': True,
+    }
 
-    # Run cleanup if needed to prevent disk space from running out
-    cleanup_temp_folder_if_needed()
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        # Fetch metadata to run pre-download checks
+        info = ydl.extract_info(url, download=False)
+        title = quote(info['title'] + '.mp3', safe='')
 
-    # Download audio file
-    audio_file = audio.download(output_path=LOCAL_DOWNLOAD_FOLDER, filename=title)
-    print(f"Audio file downloaded: {title}")
+        # Skip files larger than 1 GB
+        filesize = info.get('filesize') or info.get('filesize_approx')
+        if filesize and filesize / (1024 ** 3) > 1:
+            print(f"File is too large to be downloaded: {title}")
+            return
 
-    # Write the file on disk as an MP3 file
-    base, ext = os.path.splitext(audio_file)
-    mp3_file = base + '.mp3'
-    os.rename(audio_file, mp3_file)
+        # Run cleanup if needed to prevent disk space from running out
+        cleanup_temp_folder_if_needed()
+
+        # Download audio stream and convert it to MP3
+        info = ydl.extract_info(url, download=True)
+        try:
+            mp3_file = info['requested_downloads'][0]['filepath']
+        except (KeyError, IndexError):
+            mp3_file = os.path.splitext(ydl.prepare_filename(info))[0] + '.mp3'
 
     return mp3_file, title
 
