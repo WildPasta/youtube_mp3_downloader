@@ -28,7 +28,7 @@ docs: clarify local setup in README
 - CI must pass before merging:
   - **lint** — `ruff` with `--select E4,E7,E9,F`
   - **build** — the Docker image must build
-  - **smoke** — the app must install and import on Python 3.11, 3.12 and 3.13
+  - **smoke** — the app must install and import on Python 3.11, 3.12, 3.13 and 3.14
 - Self-review your diff before requesting review
 
 ## Releases
@@ -40,14 +40,16 @@ docs: clarify local setup in README
 
 ## Local development
 
-With Python (3.11+ required):
+With [uv](https://docs.astral.sh/uv/) (Python 3.11+ handled automatically):
 
 ```
-python3 -m venv venv
-source venv/bin/activate
-pip install -r server/requirements.txt
-python server/app.py -p 13000
+uv sync
+uv run python server/app.py -p 13000
 ```
+
+`uv sync` creates a local `.venv` and installs the exact versions pinned in `uv.lock`.
+After changing dependencies in `pyproject.toml`, run `uv lock && uv sync` and commit
+the updated lockfile.
 
 Or with Docker:
 
@@ -62,5 +64,5 @@ they must be installed on your machine.
 ## Dependency updates
 
 Dependabot opens weekly grouped update PRs for GitHub Actions, Python dependencies
-and Docker base images. `yt-dlp` updates in particular should be merged promptly —
-stale versions break as YouTube changes.
+(`uv` ecosystem, updating `uv.lock`) and Docker base images. `yt-dlp` updates in
+particular should be merged promptly — stale versions break as YouTube changes.

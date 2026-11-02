@@ -14,7 +14,7 @@ YouTube MP3 Downloader is a web application built with Flask that allows users t
 - Served by gunicorn inside a hardened Docker image (non-root user, healthcheck)
 
 ## Requirements
-- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) (Python 3.11+ is handled automatically)
 - [ffmpeg](https://ffmpeg.org) - audio conversion
 - [Deno](https://deno.com) or Node.js ≥ 20 - JavaScript runtime required by yt-dlp for YouTube
 
@@ -22,20 +22,20 @@ YouTube MP3 Downloader is a web application built with Flask that allows users t
 
 ## Quick Install (CLI)
 
-> *Note: It's wise to setup a venv to run any Python application*
-
 Simply follow:
 ```shell
 git clone https://github.com/WildPasta/youtube_mp3_downloader.git
 cd youtube_mp3_downloader
-python -m pip install -r server/requirements.txt
+uv sync
 ```
+
+> *Note: `uv sync` creates a local `.venv` automatically and installs the exact versions pinned in `uv.lock`*
 
 ## Usage (CLI)
 
 1. Start the application:
    ```shell
-   python server/app.py -p 8080
+   uv run python server/app.py -p 8080
    ```
 2. Open your web browser and visit `http://<your_server_hostname>:8080`
 
@@ -69,8 +69,8 @@ docker compose up -d --build
 Or build manually:
 
 ```shell
-docker build -t youtube_mp3_downloader:2.0.0 .
-docker run -d -p 13000:13000 youtube_mp3_downloader:2.0.0
+docker build -t youtube_mp3_downloader:2.1.0 .
+docker run -d -p 13000:13000 youtube_mp3_downloader:2.1.0
 ```
 
 ## Todo
