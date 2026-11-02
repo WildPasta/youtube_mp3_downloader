@@ -1,30 +1,42 @@
-# YouTube Downloader
+# YouTube MP3 Downloader
+
+[![CI](https://github.com/WildPasta/youtube_mp3_downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/WildPasta/youtube_mp3_downloader/actions/workflows/ci.yml)
 
 ## Overview
-YouTube Downloader is a web application built with Flask that allows users to download audio files from YouTube videos. Simply provide the YouTube video URL, and the application will extract the audio and provide a download link for the converted MP3 file.
+YouTube MP3 Downloader is a web application built with Flask that allows users to download audio files from YouTube videos. Simply provide the YouTube video URL, and the application extracts the audio and converts it to a genuine 192 kbps MP3 file.
 
 ## Features
-- Download audio from YouTube videos as MP3 files
-- User-friendly web interface
-- Download batch from file
-- File cleanup of download folder
+- Download audio from YouTube videos as real MP3 files (converted with ffmpeg)
+- Modern, responsive web interface with automatic dark mode
+- Batch downloads from a `.txt` file, returned as a single `.zip` archive
+- Loading indicators and inline error messages in the UI
+- Files larger than 1 GB are skipped; temp folder cleanup prevents disk exhaustion
+- Served by gunicorn inside a hardened Docker image (non-root user, healthcheck)
+
+## Requirements
+- Python 3.11+
+- [ffmpeg](https://ffmpeg.org) - audio conversion
+- [Deno](https://deno.com) or Node.js ≥ 20 - JavaScript runtime required by yt-dlp for YouTube
+
+> *Note: the Docker image bundles all of these (easiest path).*
 
 ## Quick Install (CLI)
+
+> *Note: It's wise to setup a venv to run any Python application*
 
 Simply follow:
 ```shell
 git clone https://github.com/WildPasta/youtube_mp3_downloader.git
 cd youtube_mp3_downloader
-python -m pip install -r requirements.txt
+python -m pip install -r server/requirements.txt
 ```
 
-> *Note: It's wise to setup a venv to run any Python application*
 
 ## Usage (CLI)
 
 1. Start the application:
    ```shell
-   python app.py -p 8080
+   python server/app.py -p 8080
    ```
 2. Open your web browser and visit `http://<your_server_hostname>:8080`
 
@@ -32,8 +44,8 @@ python -m pip install -r requirements.txt
 
 ```
 https://www.youtube.com/watch?v=abc
-https://www.youtube.com/watch?v=def
-https://www.youtube.com/watch?v=ghi
+https://youtu.be/def
+https://www.youtube.com/shorts/ghi
 ```
 
 4. Click the download button
@@ -48,18 +60,31 @@ Clone the repository:
 git clone https://github.com/WildPasta/youtube_mp3_downloader.git
 ```
 
-Build the docker image:
+Build and run using docker compose (builds the image locally):
 ```shell
-docker build -t wildpasta/youtube_downloader:1.2.0 . --rm
+docker compose up -d --build
 ```
 
-Run the docker container using the docker-compose.yml file:
+Or build manually:
 ```shell
-docker-compose up -d
+docker build -t youtube_mp3_downloader:2.0.0 .
+docker run -d -p 13000:13000 youtube_mp3_downloader:2.0.0
 ```
+
+Or pull the released image from GHCR:
+```shell
+docker run -d -p 13000:13000 ghcr.io/wildpasta/youtube_mp3_downloader:latest
+```
+
+## CI/CD
+
+Every pull request runs linting (ruff), a Docker image build and import smoke tests on Python 3.11–3.13.
+Pushing a `vX.Y.Z` tag builds the release image, publishes it to [GHCR](https://github.com/WildPasta/youtube_mp3_downloader/pkgs/container/youtube_mp3_downloader) and creates a GitHub Release with generated notes.
+Dependabot submits weekly grouped updates for GitHub Actions, Python dependencies and Docker base images.
+
 ## Todo
 
-- [ ] Use *waitress* or *gunicorn* as a WSGI
+- [x] ~~Use *waitress* or *gunicorn* as a WSGI~~ (gunicorn since v2.0.0)
 - [ ] Choose to download either the whole clip or only the audio
 - [ ] CSRF protection with Flask-WTF
 - [ ] Implementation of Asynchronous download for multiple client usage
@@ -67,6 +92,7 @@ docker-compose up -d
 ## Contribution
 
 Feel free to contribute by adding a new feature!
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the git workflow, commit conventions and release process.
 You can reach out at contact@pastabox.dev.
 
 ## License
