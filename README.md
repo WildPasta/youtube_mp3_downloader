@@ -71,15 +71,10 @@ docker build -t youtube_mp3_downloader:2.0.0 .
 docker run -d -p 13000:13000 youtube_mp3_downloader:2.0.0
 ```
 
-Or pull the released image from GHCR:
-```shell
-docker run -d -p 13000:13000 ghcr.io/wildpasta/youtube_mp3_downloader:latest
-```
-
 ## CI/CD
 
 Every pull request runs linting (ruff), a Docker image build and import smoke tests on Python 3.11–3.13.
-Pushing a `vX.Y.Z` tag builds the release image, publishes it to [GHCR](https://github.com/WildPasta/youtube_mp3_downloader/pkgs/container/youtube_mp3_downloader) and creates a GitHub Release with generated notes.
+Pushing a `vX.Y.Z` tag validates the Docker build and creates a GitHub Release with generated notes.
 Dependabot submits weekly grouped updates for GitHub Actions, Python dependencies and Docker base images.
 
 ## Todo
