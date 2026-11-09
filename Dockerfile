@@ -1,6 +1,6 @@
 FROM denoland/deno:bin-2.9.8 AS deno
 
-FROM ghcr.io/astral-sh/uv:0.13.6 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 
 FROM python:3.13-slim
 
