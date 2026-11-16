@@ -1,8 +1,8 @@
 FROM denoland/deno:bin-2.9.8 AS deno
 
-FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.8 AS uv
 
-FROM python:3.13-slim
+FROM python:3.15-slim
 
 ARG VERSION=2.1.0
 LABEL org.opencontainers.image.version="${VERSION}"
